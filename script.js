@@ -1,0 +1,60 @@
+const margin = { top: 30, right: 30, bottom: 40, left: 50 };
+const width = 800 - margin.left - margin.right;
+const height = 400 - margin.top - margin.bottom;
+
+const svg = d3.select("#chart")
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+const parseDate = d3.timeParse("%Y-%m-%d");
+
+d3.csv("UNRATE.csv", d => {
+    const rawDate = d.observation_date || d.DATE;
+    const rawRate = d.UNRATE;
+    
+    // Handle missing or empty values
+    if (!rawRate || rawRate.trim() === "") {
+        return null;
+    }
+
+    return {
+        date: parseDate(rawDate),
+        rate: +rawRate
+    };
+}).then(data => {
+    data = data.filter(d => d.date !== null && !isNaN(d.rate));
+
+    const statusDiv = d3.select("#status");
+    statusDiv.attr("class", "success")
+        .html(`Successfully loaded ${data.length} records.`);
+
+    const x = d3.scaleTime()
+        .domain(d3.extent(data, d => d.date))
+        .range([0, width]);
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.rate) + 2])
+        .range([height, 0]);
+    svg.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x));
+    svg.append("g")
+        .attr("class", "axis")
+        .call(d3.axisLeft(y).tickFormat(d => d + "%"));
+
+    const line = d3.line()
+        .x(d => x(d.date))
+        .y(d => y(d.rate));
+    svg.append("path")
+        .datum(data)
+        .attr("class", "line")
+        .attr("d", line);
+
+}).catch(error => {
+    console.error("Error loading the CSV file:", error);
+    d3.select("#status")
+        .attr("class", "error")
+        .html("Failed to load data. Check console log for details.");
+});
