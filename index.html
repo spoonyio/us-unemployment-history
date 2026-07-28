@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>US Unemployment Rates during Major Economic Events</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+    <h1>US Unemployment Rates during Major Economic Events (Test)</h1>
+    <h1 id="status">Loading...</h1>
+
+    <script>
+        d3.csv("UNRATE.csv").then(data => {
+        document.getElementById("status").innerText = 
+            "Success! Loaded " + data.length + " rows of data";
+        
+        console.log(data);
+        }).catch(error => {
+        document.getElementById("status").innerText = 
+            "Failed to load";
+        });
+    </script>
+
+</body>
+</html>
