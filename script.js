@@ -8,22 +8,50 @@ const scenes = [
   {
     title: "Scene 1: Dot-Com Bubble (1990–2006)",
     subtitle: "Baseline labor market conditions and mild structural downturns.",
-    xDomain: [new Date("1990-01-01"), new Date("2006-12-31")]
+    xDomain: [new Date("1990-01-01"), new Date("2006-12-31")],
+    annotations: [
+      {
+        note: { title: "June 2003 Peak", label: "Unemployment peaks at 6.3% following the Dot-Com bust.", wrap: 180 },
+        date: new Date("2003-06-01"),
+        rate: 6.3,
+        dx: -40,
+        dy: -40
+      }
+    ]
   },
   {
     title: "Scene 2: The 2008 Great Recession (2007–2018)",
     subtitle: "A deep financial crisis causing arise to 10% unemployment, followed by a slow recovery.",
-    xDomain: [new Date("2007-01-01"), new Date("2018-12-31")]
+    xDomain: [new Date("2007-01-01"), new Date("2018-12-31")],
+    annotations: [
+      {
+        note: { title: "October 2009 Peak", label: "Unemployment hits 10%, the worst downturn since the 1980s.", wrap: 200 },
+        date: new Date("2009-10-01"),
+        rate: 10.0,
+        dx: 40,
+        dy: -30
+      }
+    ]
   },
   {
     title: "Scene 3: The 2020 COVID-19 Pandemic (2019–2022)",
     subtitle: "A spike to 14.8% followed by a rapid rebound.",
-    xDomain: [new Date("2019-01-01"), new Date("2022-12-31")]
+    xDomain: [new Date("2019-01-01"), new Date("2022-12-31")],
+    annotations: [
+      {
+        note: { title: "April 2020 Spike", label: "14.8%, The highest unemployment rate recorded since the Great Depression.", wrap: 200 },
+        date: new Date("2020-04-01"),
+        rate: 14.8,
+        dx: -60,
+        dy: 20
+      }
+    ]
   },
   {
     title: "Scene 4: Full Exploration (1990–Present)",
     subtitle: "Compare all economic shocks across the entire 1990–Present timeline.",
-    xDomain: null
+    xDomain: null,
+    annotations: []
   }
 ];
 
@@ -40,14 +68,24 @@ const svg = d3.select("#chart")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
 const recessionGroup = svg.append("g").attr("class", "recessions");
-
-const x = d3.scaleTime().range([0, width]);
-const y = d3.scaleLinear().range([height, 0]);
-
 const xAxisGroup = svg.append("g").attr("transform", `translate(0, ${height})`);
 const yAxisGroup = svg.append("g");
 const pathGroup = svg.append("path").attr("class", "line").attr("fill", "none").attr("stroke", "#0056b3").attr("stroke-width", 2.5);
-    
+const annotationGroup = svg.append("g").attr("class", "annotation-group");
+
+const tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("position", "absolute")
+    .style("padding", "8px 12px")
+    .style("background", "rgba(0,0,0,0.85)")
+    .style("color", "#fff")
+    .style("border-radius", "4px")
+    .style("font-size", "12px")
+    .style("pointer-events", "none")
+    .style("opacity", 0);
+
+const x = d3.scaleTime().range([0, width]);
+const y = d3.scaleLinear().range([height, 0]);
 const parseDate = d3.timeParse("%Y-%m-%d");
 
 function processRecessions(rawUsrec) {
@@ -89,12 +127,10 @@ Promise.all([
     ]).then(([unrateData, usrecData]) => {
     state.data = unrateData
         .filter(d => d !== null && d.date !== null && !isNaN(d.rate) && d.date >= new Date("1990-01-01"));
-    
     if (state.data.length === 0) throw new Error("No valid data parsed.");
 
     state.recessions = processRecessions(usrecData);
 
-    // Default full domain for Scene 4 based on the entire dataset
     scenes[3].xDomain = d3.extent(state.data, d => d.date);
 
     y.domain([0, d3.max(state.data, d => d.rate) + 2]);
@@ -106,6 +142,8 @@ Promise.all([
 
     d3.select("#btn-next").on("click", () => changeScene(1));
     d3.select("#btn-prev").on("click", () => changeScene(-1));
+
+    setupHoverOverlay();
     
     renderScene();
 
@@ -124,6 +162,7 @@ function changeScene(direction) {
 
 function renderScene() {
     const current = scenes[state.currentScene];
+    const t = d3.transition().duration(800);
 
     d3.select("#scene-title").text(current.title);
     d3.select("#scene-subtitle").text(current.subtitle);
@@ -132,7 +171,16 @@ function renderScene() {
     d3.selectAll(".step-dot").classed("active", (d, i) => i === state.currentScene);
 
     x.domain(current.xDomain);
-    xAxisGroup.call(d3.axisBottom(x));
+    xAxisGroup.transition(t).call(d3.axisBottom(x));
+
+    const lineGenerator = d3.line()
+        .x(d => x(d.date))
+        .y(d => y(d.rate));
+
+    pathGroup
+        .datum(state.data)
+        .transition(t)
+        .attr("d", lineGenerator);
 
     // Draw recession bands
     const visibleRecessions = state.recessions.filter(r => 
@@ -141,6 +189,7 @@ function renderScene() {
 
     const bands = recessionGroup.selectAll(".recession-band")
         .data(visibleRecessions, d => d.start);
+    
 
     bands.enter()
         .append("rect")
@@ -155,14 +204,66 @@ function renderScene() {
 
     bands.exit().remove();
 
-    // Draw unemployment rate line
-    const lineGenerator = d3.line()
-        .x(d => x(d.date))
-        .y(d => y(d.rate));
+    renderAnnotations(current.annotations, t);
+}
 
-    const visibleData = state.data.filter(d => d.date >= current.xDomain[0] && d.date <= current.xDomain[1]);
+function renderAnnotations(annotationList, transition) {
+  annotationGroup.html("");
 
-    pathGroup
-        .datum(visibleData)
-        .attr("d", lineGenerator);
+  if (!annotationList || annotationList.length === 0) return;
+
+  const formattedAnnotations = annotationList.map(a => ({
+    note: a.note,
+    x: x(a.date),
+    y: y(a.rate),
+    dx: a.dx,
+    dy: a.dy,
+    type: d3.annotationCalloutCircle,
+    subject: { radius: 8, radiusPadding: 2 }
+  }));
+
+  const makeAnnotations = d3.annotation()
+    .type(d3.annotationLabel)
+    .annotations(formattedAnnotations);
+
+  annotationGroup
+    .call(makeAnnotations)
+    .style("opacity", 0)
+    .transition()
+    .duration(600)
+    .delay(400)
+    .style("opacity", 1);
+}
+
+function setupHoverOverlay() {
+  const bisectDate = d3.bisector(d => d.date).left;
+
+  const overlay = svg.append("rect")
+    .attr("class", "overlay")
+    .attr("width", width)
+    .attr("height", height)
+    .style("fill", "none")
+    .style("pointer-events", "all");
+
+  overlay.on("mousemove", function(event) {
+    const currentDomain = scenes[state.currentScene].xDomain;
+    const x0 = x.invert(d3.pointer(event, this)[0]);
+    const visibleData = state.data.filter(d => d.date >= currentDomain[0] && d.date <= currentDomain[1]);
+    
+    if (visibleData.length === 0) return;
+
+    const i = bisectDate(visibleData, x0, 1);
+    const d0 = visibleData[i - 1];
+    const d1 = visibleData[i];
+    const d = (d1 && (x0 - d0.date > d1.date - x0)) ? d1 : d0;
+
+    if (!d) return;
+
+    tooltip
+      .style("opacity", 0.95)
+      .html(`<strong>${d3.timeFormat("%B %Y")(d.date)}</strong><br/>Unemployment Rate: <strong>${d.rate}%</strong>`)
+      .style("left", (event.pageX + 15) + "px")
+      .style("top", (event.pageY - 28) + "px");
+  })
+  .on("mouseout", () => tooltip.style("opacity", 0));
 }
