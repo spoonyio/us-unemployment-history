@@ -1,6 +1,7 @@
 const state = {
   currentScene: 0,
-  data: []
+  data: [],
+  recessions: []
 };
 
 const scenes = [
@@ -38,6 +39,8 @@ const svg = d3.select("#chart")
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
+const recessionGroup = svg.append("g").attr("class", "recessions");
+
 const x = d3.scaleTime().range([0, width]);
 const y = d3.scaleLinear().range([height, 0]);
 
@@ -47,22 +50,49 @@ const pathGroup = svg.append("path").attr("class", "line").attr("fill", "none").
     
 const parseDate = d3.timeParse("%Y-%m-%d");
 
-d3.csv("UNRATE.csv", d => {
-    const rawDate = d.observation_date || d.DATE;
-    const rawRate = d.UNRATE;
-    
-    // Handle missing or empty values
-    if (!rawRate || rawRate.trim() === "") {
-        return null;
-    };
+function processRecessions(rawUsrec) {
+  const filtered = rawUsrec
+    .map(d => ({
+      date: parseDate(d.observation_date || d.DATE),
+      isRecession: +d.USREC === 1
+    }))
+    .filter(d => d.date !== null && d.date >= new Date("1990-01-01"))
+    .sort((a, b) => a.date - b.date);
 
-    return {
-        date: parseDate(rawDate),
-        rate: +rawRate
-    };
-}).then(data => {
-    state.data = data.filter(d => d !== null && d.date !== null && !isNaN(d.rate));
+  const ranges = [];
+  let currentStart = null;
+
+  filtered.forEach(row => {
+    if (row.isRecession && !currentStart) {
+      currentStart = row.date;
+    } else if (!row.isRecession && currentStart) {
+      ranges.push({ start: currentStart, end: row.date });
+      currentStart = null;
+    }
+  });
+
+  if (currentStart) {
+    ranges.push({ start: currentStart, end: filtered[filtered.length - 1].date });
+  }
+
+  return ranges;
+}
+
+Promise.all([
+    d3.csv("UNRATE.csv", d => {
+        const rawDate = d.observation_date || d.DATE;
+        const rawRate = d.UNRATE;
+        if (!rawRate || rawRate.trim() === "") return null;
+        return { date: parseDate(rawDate), rate: +rawRate };
+    }),
+    d3.csv("USREC.csv")
+    ]).then(([unrateData, usrecData]) => {
+    state.data = unrateData
+        .filter(d => d !== null && d.date !== null && !isNaN(d.rate) && d.date >= new Date("1990-01-01"));
+    
     if (state.data.length === 0) throw new Error("No valid data parsed.");
+
+    state.recessions = processRecessions(usrecData);
 
     // Default full domain for Scene 4 based on the entire dataset
     scenes[3].xDomain = d3.extent(state.data, d => d.date);
@@ -72,46 +102,67 @@ d3.csv("UNRATE.csv", d => {
 
     d3.select("#status")
         .attr("class", "success")
-        .html(`Successfully loaded ${data.length} records.`);
+        .html(`Successfully loaded ${state.data.length} unemployment records & ${state.recessions.length} recession windows.`);
+
     d3.select("#btn-next").on("click", () => changeScene(1));
     d3.select("#btn-prev").on("click", () => changeScene(-1));
+    
     renderScene();
 
 }).catch(error => {
-    console.error("Error loading the CSV file:", error);
+    console.error("Error loading CSV files:", error);
     d3.select("#status")
         .attr("class", "error")
         .html("Failed to load data. Check console log for details.");
 });
 
 function changeScene(direction) {
-  state.currentScene += direction;
-  
-  state.currentScene = Math.max(0, Math.min(state.currentScene, scenes.length - 1));
-  
-  renderScene();
+    state.currentScene += direction;
+    state.currentScene = Math.max(0, Math.min(state.currentScene, scenes.length - 1));
+    renderScene();
 }
 
 function renderScene() {
-  const current = scenes[state.currentScene];
+    const current = scenes[state.currentScene];
 
-  d3.select("#scene-title").text(current.title);
-  d3.select("#scene-subtitle").text(current.subtitle);
-  d3.select("#btn-prev").property("disabled", state.currentScene === 0);
-  d3.select("#btn-next").property("disabled", state.currentScene === scenes.length - 1);
-  d3.selectAll(".step-dot").classed("active", (d, i) => i === state.currentScene);
+    d3.select("#scene-title").text(current.title);
+    d3.select("#scene-subtitle").text(current.subtitle);
+    d3.select("#btn-prev").property("disabled", state.currentScene === 0);
+    d3.select("#btn-next").property("disabled", state.currentScene === scenes.length - 1);
+    d3.selectAll(".step-dot").classed("active", (d, i) => i === state.currentScene);
 
-  x.domain(current.xDomain);
+    x.domain(current.xDomain);
+    xAxisGroup.call(d3.axisBottom(x));
 
-  xAxisGroup.call(d3.axisBottom(x));
+    // Draw recession bands
+    const visibleRecessions = state.recessions.filter(r => 
+        r.end >= current.xDomain[0] && r.start <= current.xDomain[1]
+    );
 
-  const lineGenerator = d3.line()
-    .x(d => x(d.date))
-    .y(d => y(d.rate));
+    const bands = recessionGroup.selectAll(".recession-band")
+        .data(visibleRecessions, d => d.start);
 
-  const visibleData = state.data.filter(d => d.date >= current.xDomain[0] && d.date <= current.xDomain[1]);
+    bands.enter()
+        .append("rect")
+        .attr("class", "recession-band")
+        .merge(bands)
+        .attr("x", d => x(d.start))
+        .attr("width", d => Math.max(0, x(d.end) - x(d.start)))
+        .attr("y", 0)
+        .attr("height", height)
+        .attr("fill", "#212529")
+        .attr("opacity", 0.12);
 
-  pathGroup
-    .datum(visibleData)
-    .attr("d", lineGenerator);
+    bands.exit().remove();
+
+    // Draw unemployment rate line
+    const lineGenerator = d3.line()
+        .x(d => x(d.date))
+        .y(d => y(d.rate));
+
+    const visibleData = state.data.filter(d => d.date >= current.xDomain[0] && d.date <= current.xDomain[1]);
+
+    pathGroup
+        .datum(visibleData)
+        .attr("d", lineGenerator);
 }
