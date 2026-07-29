@@ -49,3 +49,53 @@ h2 {
 .axis line {
   stroke: #ccc;
 }
+
+.container {
+  max-width: 850px;
+  margin: 0 auto;
+}
+
+.nav-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  background: #ffffff;
+  padding: 10px 15px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+button {
+  background-color: #0056b3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.step-dot {
+  display: inline-block;
+  width: 26px;
+  height: 26px;
+  line-height: 26px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  color: #555;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: bold;
+  margin: 0 4px;
+}
+
+.step-dot.active {
+  background: #0056b3;
+  color: white;
+}

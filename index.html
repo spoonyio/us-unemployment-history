@@ -2,15 +2,30 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>US Unemployment Rates during Major Economic Events</title>
+        <title>US Unemployment Rates from 1990-Present</title>
         <link rel="stylesheet" href="styles.css">
         <script src="https://d3js.org/d3.v7.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/2.5.1/d3-annotation.min.js"></script>
     </head>
     <body>
-        <h2>US Unemployment Rates during Major Economic Events (Test)</h2>
-        <div id="status">Loading data...</div>
-        <div id="chart"></div>
+        <div class="container">
+            <h2 id="scene-title">US Unemployment Rates</h2>
+            <p id="scene-subtitle">Loading description...</p>
+
+            <div class="nav-controls">
+            <button id="btn-prev" disabled>Previous</button>
+            <div id="stepper">
+                <span class="step-dot active">1</span>
+                <span class="step-dot">2</span>
+                <span class="step-dot">3</span>
+                <span class="step-dot">4</span>
+            </div>
+            <button id="btn-next">Next</button>
+            </div>
+            <div id="chart"></div>
+            <div id="status">Loading data...</div>
+        </div>
+
         <script src="script.js"></script>
     </body>
 </html>
