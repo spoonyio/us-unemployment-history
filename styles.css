@@ -11,13 +11,32 @@ h2 {
   color: #222;
 }
 
-#status { 
-  padding: 12px 0px; 
-  border-radius: 6px; 
-  margin-bottom: 20px; 
-  font-weight: 400; 
-  font-size: 0.65rem;
-  font-style: italic;
+#status,
+#citation {
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin-top: 8px;
+  box-sizing: border-box;
+}
+
+/* Matching status background & text styling */
+#citation {
+  background-color: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
+}
+
+/* Styled link within citation banner */
+#citation a {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+#citation a:hover {
+  color: #003d80;
 }
 
 .success { 
@@ -99,4 +118,32 @@ button:disabled {
 .step-dot.active {
   background: #0056b3;
   color: white;
+}
+
+.line {
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+.focus-dot {
+  transition: r 0.1s ease;
+  filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.3));
+}
+
+.recession-band {
+  pointer-events: fill;
+  transition: fill 0.15s ease, opacity 0.15s ease;
+}
+
+.annotation-group .annotation {
+  pointer-events: all;
+}
+
+.annotation-subject circle {
+  transition: fill 0.2s ease, stroke-width 0.2s ease;
+}
+
+.annotation-note-title,
+.annotation-note-label {
+  transition: fill 0.2s ease;
 }

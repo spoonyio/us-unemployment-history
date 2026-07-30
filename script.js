@@ -1,65 +1,68 @@
+// Main state object to hold the current scene and data
 const state = {
-  currentScene: 0,
-  data: [],
-  recessions: []
+    currentScene: 0,
+    data: [],
+    recessions: []
 };
 
+// Scene configurations with titles, subtitles, xDomain, and annotations
 const scenes = [
-  {
-    title: "Scene 1: Dot-Com Bubble (1990–2006)",
-    subtitle: "Baseline labor market conditions and mild structural downturns.",
-    xDomain: [new Date("1990-01-01"), new Date("2006-12-31")],
-    annotations: [
-      {
-        note: { title: "June 2003 Peak", label: "Unemployment peaks at 6.3% following the Dot-Com bust.", wrap: 180 },
-        date: new Date("2003-06-01"),
-        rate: 6.3,
-        dx: -40,
-        dy: -40
-      }
-    ]
-  },
-  {
-    title: "Scene 2: The 2008 Great Recession (2007–2018)",
-    subtitle: "A deep financial crisis causing arise to 10% unemployment, followed by a slow recovery.",
-    xDomain: [new Date("2007-01-01"), new Date("2018-12-31")],
-    annotations: [
-      {
-        note: { title: "October 2009 Peak", label: "Unemployment hits 10%, the worst downturn since the 1980s.", wrap: 200 },
-        date: new Date("2009-10-01"),
-        rate: 10.0,
-        dx: 40,
-        dy: -30
-      }
-    ]
-  },
-  {
-    title: "Scene 3: The 2020 COVID-19 Pandemic (2019–2022)",
-    subtitle: "A spike to 14.8% followed by a rapid rebound.",
-    xDomain: [new Date("2019-01-01"), new Date("2022-12-31")],
-    annotations: [
-      {
-        note: { title: "April 2020 Spike", label: "14.8%, The highest unemployment rate recorded since the Great Depression.", wrap: 200 },
-        date: new Date("2020-04-01"),
-        rate: 14.8,
-        dx: -60,
-        dy: 20
-      }
-    ]
-  },
-  {
-    title: "Scene 4: Full Exploration (1990–Present)",
-    subtitle: "Compare all economic shocks across the entire 1990–Present timeline.",
-    xDomain: null,
-    annotations: []
-  }
+    {
+        title: "Scene 1: Dot-Com Bubble (1990–2006)",
+        subtitle: "Baseline labor market conditions and mild structural downturns.",
+        xDomain: [new Date("1990-01-01"), new Date("2006-12-31")],
+        annotations: [
+            {
+                note: { title: "June 2003 Peak", label: "Unemployment peaks at 6.3% following the Dot-Com bust.", wrap: 180 },
+                date: new Date("2003-06-01"),
+                rate: 6.3,
+                dx: -40,
+                dy: -40
+            }
+        ]
+    },
+    {
+        title: "Scene 2: The 2008 Great Recession (2007–2018)",
+        subtitle: "A deep financial crisis causing arise to 10% unemployment, followed by a slow recovery.",
+        xDomain: [new Date("2007-01-01"), new Date("2018-12-31")],
+        annotations: [
+            {
+                note: { title: "October 2009 Peak", label: "Unemployment hits 10%, the worst downturn since the 1980s.", wrap: 200 },
+                date: new Date("2009-10-01"),
+                rate: 10.0,
+                dx: 40,
+                dy: -30
+            }
+        ]
+    },
+    {
+        title: "Scene 3: The 2020 COVID-19 Pandemic (2019–2022)",
+        subtitle: "A spike to 14.8% followed by a rapid rebound.",
+        xDomain: [new Date("2019-01-01"), new Date("2022-12-31")],
+        annotations: [
+            {
+                note: { title: "April 2020 Spike", label: "14.8%, The highest unemployment rate recorded since the Great Depression.", wrap: 200 },
+                date: new Date("2020-04-01"),
+                rate: 14.8,
+                dx: 60,
+                dy: 20
+            }
+        ]
+    },
+    {
+        title: "Scene 4: Full Exploration (1990–Present)",
+        subtitle: "Compare all economic shocks across the entire 1990–Present timeline.",
+        xDomain: null,
+        annotations: []
+    }
 ];
 
-
+// Set up SVG canvas dimensions and margins
 const margin = { top: 30, right: 30, bottom: 40, left: 50 };
 const width = 800 - margin.left - margin.right;
 const height = 400 - margin.top - margin.bottom;
 
+// Append SVG to the chart container
 const svg = d3.select("#chart")
     .append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -67,12 +70,14 @@ const svg = d3.select("#chart")
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
+// Create DOM layers in z-index order (bottom to top)
 const recessionGroup = svg.append("g").attr("class", "recessions");
 const xAxisGroup = svg.append("g").attr("transform", `translate(0, ${height})`);
 const yAxisGroup = svg.append("g");
 const pathGroup = svg.append("path").attr("class", "line").attr("fill", "none").attr("stroke", "#0056b3").attr("stroke-width", 2.5);
 const annotationGroup = svg.append("g").attr("class", "annotation-group");
 
+// Hover tooltip container
 const tooltip = d3.select("body").append("div")
     .attr("class", "tooltip")
     .style("position", "absolute")
@@ -84,38 +89,41 @@ const tooltip = d3.select("body").append("div")
     .style("pointer-events", "none")
     .style("opacity", 0);
 
+// Define linear and time scales
 const x = d3.scaleTime().range([0, width]);
 const y = d3.scaleLinear().range([height, 0]);
 const parseDate = d3.timeParse("%Y-%m-%d");
 
+// Converts binary 0/1 recession flags into date ranges
 function processRecessions(rawUsrec) {
-  const filtered = rawUsrec
-    .map(d => ({
-      date: parseDate(d.observation_date || d.DATE),
-      isRecession: +d.USREC === 1
-    }))
-    .filter(d => d.date !== null && d.date >= new Date("1990-01-01"))
-    .sort((a, b) => a.date - b.date);
+    const filtered = rawUsrec
+        .map(d => ({
+            date: parseDate(d.observation_date || d.DATE),
+            isRecession: +d.USREC === 1
+        }))
+        .filter(d => d.date !== null && d.date >= new Date("1990-01-01"))
+        .sort((a, b) => a.date - b.date);
 
-  const ranges = [];
-  let currentStart = null;
+    const ranges = [];
+    let currentStart = null;
 
-  filtered.forEach(row => {
-    if (row.isRecession && !currentStart) {
-      currentStart = row.date;
-    } else if (!row.isRecession && currentStart) {
-      ranges.push({ start: currentStart, end: row.date });
-      currentStart = null;
+    filtered.forEach(row => {
+        if (row.isRecession && !currentStart) {
+            currentStart = row.date;
+        } else if (!row.isRecession && currentStart) {
+            ranges.push({ start: currentStart, end: row.date });
+            currentStart = null;
+        }
+    });
+
+    if (currentStart) {
+        ranges.push({ start: currentStart, end: filtered[filtered.length - 1].date });
     }
-  });
 
-  if (currentStart) {
-    ranges.push({ start: currentStart, end: filtered[filtered.length - 1].date });
-  }
-
-  return ranges;
+    return ranges;
 }
 
+// Load both CSV files in parallel and process the data
 Promise.all([
     d3.csv("UNRATE.csv", d => {
         const rawDate = d.observation_date || d.DATE;
@@ -124,15 +132,19 @@ Promise.all([
         return { date: parseDate(rawDate), rate: +rawRate };
     }),
     d3.csv("USREC.csv")
-    ]).then(([unrateData, usrecData]) => {
+]).then(([unrateData, usrecData]) => {
+    // Clean and store unemployment data, filtering out invalid entries
     state.data = unrateData
         .filter(d => d !== null && d.date !== null && !isNaN(d.rate) && d.date >= new Date("1990-01-01"));
     if (state.data.length === 0) throw new Error("No valid data parsed.");
 
+    // Process recession date ranges from the USREC dataset
     state.recessions = processRecessions(usrecData);
 
+    // Set Scene 4 (last scene) to full data extent
     scenes[3].xDomain = d3.extent(state.data, d => d.date);
 
+    // Set initial scales and axes
     y.domain([0, d3.max(state.data, d => d.rate) + 2]);
     yAxisGroup.call(d3.axisLeft(y).tickFormat(d => d + "%"));
 
@@ -143,8 +155,7 @@ Promise.all([
     d3.select("#btn-next").on("click", () => changeScene(1));
     d3.select("#btn-prev").on("click", () => changeScene(-1));
 
-    setupHoverOverlay();
-    
+    setupLineHover();
     renderScene();
 
 }).catch(error => {
@@ -154,15 +165,17 @@ Promise.all([
         .html("Failed to load data. Check console log for details.");
 });
 
+// Change the current scene based on direction (-1 for previous, +1 for next)
 function changeScene(direction) {
     state.currentScene += direction;
     state.currentScene = Math.max(0, Math.min(state.currentScene, scenes.length - 1));
     renderScene();
 }
 
+// Render the current scene with transitions and annotations
 function renderScene() {
     const current = scenes[state.currentScene];
-    const t = d3.transition().duration(800);
+    const t = d3.transition().duration(800).ease(d3.easeCubicInOut);
 
     d3.select("#scene-title").text(current.title);
     d3.select("#scene-subtitle").text(current.subtitle);
@@ -170,9 +183,16 @@ function renderScene() {
     d3.select("#btn-next").property("disabled", state.currentScene === scenes.length - 1);
     d3.selectAll(".step-dot").classed("active", (d, i) => i === state.currentScene);
 
-    x.domain(current.xDomain);
+    const activeDomain = current.xDomain || d3.extent(state.data, d => d.date);
+
+    // Hide tracking dot on scene transition
+    focusDot.style("opacity", 0);
+
+    // Update x-axis domain and animate transition
+    x.domain(activeDomain);
     xAxisGroup.transition(t).call(d3.axisBottom(x));
 
+    // Animate line path transition to new domain
     const lineGenerator = d3.line()
         .x(d => x(d.date))
         .y(d => y(d.rate));
@@ -182,88 +202,202 @@ function renderScene() {
         .transition(t)
         .attr("d", lineGenerator);
 
-    // Draw recession bands
-    const visibleRecessions = state.recessions.filter(r => 
-        r.end >= current.xDomain[0] && r.start <= current.xDomain[1]
-    );
+    // Hide recession bands during pan transition
+    recessionGroup.selectAll(".recession-band").style("opacity", 0);
 
-    const bands = recessionGroup.selectAll(".recession-band")
-        .data(visibleRecessions, d => d.start);
-    
+    // Fade in recession bands after transition finishes
+    t.end().then(() => {
+        const visibleRecessions = state.recessions.filter(r =>
+            r.end >= activeDomain[0] && r.start <= activeDomain[1]
+        );
 
-    bands.enter()
-        .append("rect")
-        .attr("class", "recession-band")
-        .merge(bands)
-        .attr("x", d => x(d.start))
-        .attr("width", d => Math.max(0, x(d.end) - x(d.start)))
-        .attr("y", 0)
-        .attr("height", height)
-        .attr("fill", "#212529")
-        .attr("opacity", 0.12);
+        const formatDate = d3.timeFormat("%B %Y");
 
-    bands.exit().remove();
+        const bands = recessionGroup.selectAll(".recession-band")
+            .data(visibleRecessions, d => d.start);
+
+        bands.exit().remove();
+
+        const bandsEnter = bands.enter()
+            .append("rect")
+            .attr("class", "recession-band")
+            .attr("y", 0)
+            .attr("height", height)
+            .style("cursor", "pointer")
+            .style("pointer-events", "all");
+
+        // Merge enter and update selections for recession bands
+        bandsEnter.merge(bands)
+            .attr("x", d => x(d.start))
+            .attr("width", d => Math.max(0, x(d.end) - x(d.start)))
+            .attr("fill", "#212529")
+            .style("opacity", 0)
+            .on("mouseover", function (event, d) {
+                event.stopPropagation();
+                focusDot.style("opacity", 0);
+                d3.select(this).attr("fill", "#495057").style("opacity", 0.3);
+                tooltip
+                    .style("opacity", 0.95)
+                    .html(`<strong>NBER Official U.S. Recession</strong><br/>` +
+                        `Period: <strong>${formatDate(d.start)} – ${formatDate(d.end)}</strong>`)
+                    .style("left", (event.pageX + 15) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mousemove", function (event) {
+                event.stopPropagation();
+                tooltip
+                    .style("left", (event.pageX + 15) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function () {
+                d3.select(this).attr("fill", "#212529").style("opacity", 0.12);
+                tooltip.style("opacity", 0);
+            })
+            .transition().duration(300)
+            .style("opacity", 0.12);
+    });
 
     renderAnnotations(current.annotations, t);
 }
 
+// Render annotations for the current scene with hover interactions
 function renderAnnotations(annotationList, transition) {
-  annotationGroup.html("");
+    annotationGroup.html("");
 
-  if (!annotationList || annotationList.length === 0) return;
+    if (!annotationList || annotationList.length === 0) return;
 
-  const formattedAnnotations = annotationList.map(a => ({
-    note: a.note,
-    x: x(a.date),
-    y: y(a.rate),
-    dx: a.dx,
-    dy: a.dy,
-    type: d3.annotationCalloutCircle,
-    subject: { radius: 8, radiusPadding: 2 }
-  }));
+    // Format annotations for d3-annotation library
+    const formattedAnnotations = annotationList.map(a => ({
+        note: a.note,
+        x: x(a.date),
+        y: y(a.rate),
+        dx: a.dx,
+        dy: a.dy,
+        type: d3.annotationCalloutCircle,
+        subject: { radius: 8, radiusPadding: 2 }
+    }));
 
-  const makeAnnotations = d3.annotation()
-    .type(d3.annotationLabel)
-    .annotations(formattedAnnotations);
+    const makeAnnotations = d3.annotation()
+        .type(d3.annotationLabel)
+        .annotations(formattedAnnotations);
 
-  annotationGroup
-    .call(makeAnnotations)
-    .style("opacity", 0)
-    .transition()
-    .duration(600)
-    .delay(400)
-    .style("opacity", 1);
+    // Append annotation SVG elements
+    annotationGroup.call(makeAnnotations);
+
+    // Add hover interactions for annotations
+    annotationGroup.selectAll(".annotation")
+        .style("cursor", "pointer")
+        .on("mouseover", function () {
+            const ann = d3.select(this);
+
+            // Fill in the circle dot on line
+            ann.select(".subject")
+                .transition().duration(150)
+                .style("fill", "#0056b3")
+                .style("fill-opacity", 1)
+                .style("stroke-width", "3px");
+
+            // Highlight title text
+            ann.select(".annotation-note-title")
+                .transition().duration(150)
+                .style("fill", "#003d80");
+
+            // Highlight label body text
+            ann.select(".annotation-note-label")
+                .transition().duration(150)
+                .style("fill", "#111111");
+        })
+        .on("mouseout", function () {
+            const ann = d3.select(this);
+
+            // Return circle dot to outline
+            ann.select(".subject")
+                .transition().duration(200)
+                .style("fill", "none")
+                .style("fill-opacity", 0)
+                .style("stroke-width", "2px");
+
+            // Reset text styling
+            ann.select(".annotation-note-title")
+                .transition().duration(200)
+                .style("fill", null)
+                .style("font-size", null);
+
+            ann.select(".annotation-note-label")
+                .transition().duration(200)
+                .style("fill", null);
+        });
+
+    // Fade in annotations after transition
+    annotationGroup
+        .style("opacity", 0)
+        .transition()
+        .duration(600)
+        .delay(400)
+        .style("opacity", 1);
 }
 
-function setupHoverOverlay() {
-  const bisectDate = d3.bisector(d => d.date).left;
+// Create a focus dot that follows the line on hover
+const focusDot = svg.append("circle")
+    .attr("class", "focus-dot")
+    .attr("r", 5)
+    .attr("fill", "#0056b3")
+    .attr("stroke", "#ffffff")
+    .attr("stroke-width", 2)
+    .style("opacity", 0)
+    .style("pointer-events", "none");
 
-  const overlay = svg.append("rect")
-    .attr("class", "overlay")
-    .attr("width", width)
-    .attr("height", height)
-    .style("fill", "none")
-    .style("pointer-events", "all");
+// Set up hover interactions for the line chart
+function setupLineHover() {
+    const bisectDate = d3.bisector(d => d.date).left;
 
-  overlay.on("mousemove", function(event) {
-    const currentDomain = scenes[state.currentScene].xDomain;
-    const x0 = x.invert(d3.pointer(event, this)[0]);
-    const visibleData = state.data.filter(d => d.date >= currentDomain[0] && d.date <= currentDomain[1]);
-    
-    if (visibleData.length === 0) return;
+    // Insert overlay before recessionGroup in DOM order
+    const overlay = svg.insert("rect", ".recessions")
+        .attr("class", "chart-overlay")
+        .attr("width", width)
+        .attr("height", height)
+        .style("fill", "none")
+        .style("pointer-events", "all");
 
-    const i = bisectDate(visibleData, x0, 1);
-    const d0 = visibleData[i - 1];
-    const d1 = visibleData[i];
-    const d = (d1 && (x0 - d0.date > d1.date - x0)) ? d1 : d0;
+    overlay.on("mousemove", function (event) {
+        // Check if mouse is over a recession band
+        const hoveredElement = document.elementFromPoint(event.clientX, event.clientY);
+        if (hoveredElement && hoveredElement.classList.contains("recession-band")) {
+            focusDot.style("opacity", 0);
+            return; // Let the recession band hover handle tooltip
+        }
 
-    if (!d) return;
+        const currentDomain = scenes[state.currentScene].xDomain;
+        const activeDomain = currentDomain || d3.extent(state.data, d => d.date);
+        const x0 = x.invert(d3.pointer(event, this)[0]);
 
-    tooltip
-      .style("opacity", 0.95)
-      .html(`<strong>${d3.timeFormat("%B %Y")(d.date)}</strong><br/>Unemployment Rate: <strong>${d.rate}%</strong>`)
-      .style("left", (event.pageX + 15) + "px")
-      .style("top", (event.pageY - 28) + "px");
-  })
-  .on("mouseout", () => tooltip.style("opacity", 0));
+        // Filter data visible within active domain
+        const visibleData = state.data.filter(d => d.date >= activeDomain[0] && d.date <= activeDomain[1]);
+        if (visibleData.length === 0) return;
+
+        // Find nearest data point to cursor date
+        const i = bisectDate(visibleData, x0, 1);
+        const d0 = visibleData[i - 1];
+        const d1 = visibleData[i];
+        const d = (d1 && (x0 - d0.date > d1.date - x0)) ? d1 : d0;
+
+        if (!d) return;
+
+        // Position tracking dot on line point
+        focusDot
+            .style("opacity", 1)
+            .attr("cx", x(d.date))
+            .attr("cy", y(d.rate));
+
+        // Show line tooltip
+        tooltip
+            .style("opacity", 0.95)
+            .html(`<strong>${d3.timeFormat("%B %Y")(d.date)}</strong><br/>Unemployment Rate: <strong>${d.rate}%</strong>`)
+            .style("left", (event.pageX + 15) + "px")
+            .style("top", (event.pageY - 28) + "px");
+    })
+        .on("mouseout", function () {
+            focusDot.style("opacity", 0);
+            tooltip.style("opacity", 0);
+        });
 }
