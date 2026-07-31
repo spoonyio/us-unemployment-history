@@ -22,14 +22,12 @@ h2 {
   box-sizing: border-box;
 }
 
-/* Matching status background & text styling */
 #citation {
   background-color: #f8f9fa;
   color: #495057;
   border: 1px solid #dee2e6;
 }
 
-/* Styled link within citation banner */
 #citation a {
   color: #0056b3;
   text-decoration: underline;

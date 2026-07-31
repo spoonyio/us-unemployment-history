@@ -39,12 +39,12 @@ const scenes = [
     },
     {
         title: "Scene 2: The 2008 Great Recession (2007–2018)",
-        subtitle: "Triggered by the subprime mortgage collapse, unemployment rose over 22 consecutive months to peak at 10% in October 2009. This structural financial crisis resulted in systemic damage that took nearly a decade to return to pre-crisis levels.",
+        subtitle: "Triggered by the subprime mortgage collapse, unemployment rose over 22 consecutive months to peak at 10.0% in October 2009. This structural financial crisis resulted in systemic damage that took nearly a decade to return to pre-crisis levels.",
         xDomain: [new Date("2007-01-01"), new Date("2018-12-31")],
         annotations: [
             {
                 note: {
-                    title: "10% - October 2009",
+                    title: "10.0% - October 2009",
                     label: "Unemployment hits the worst downturn since the 1980s.",
                     wrap: 200
                 },
