@@ -147,3 +147,10 @@ button:disabled {
 .annotation-note-label {
   transition: fill 0.2s ease;
 }
+
+.hover-hint {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 12px;
+  font-style: italic;
+}

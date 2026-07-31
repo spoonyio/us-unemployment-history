@@ -39,7 +39,7 @@ const scenes = [
     },
     {
         title: "Scene 2: The 2008 Great Recession (2007–2018)",
-        subtitle: "A 2 year climb to 10% unemployment resulted in systemic damage that took nearly 8 years to fully heal.",
+        subtitle: "Triggered by the subprime mortgage collapse, unemployment rose over 22 consecutive months to peak at 10% in October 2009. This structural financial crisis resulted in systemic damage that took nearly a decade to return to pre-crisis levels.",
         xDomain: [new Date("2007-01-01"), new Date("2018-12-31")],
         annotations: [
             {
@@ -50,7 +50,7 @@ const scenes = [
                 },
                 date: new Date("2009-10-01"),
                 rate: 10.0,
-                dx: 40,
+                dx: 35,
                 dy: -30
             },
             {
@@ -68,7 +68,7 @@ const scenes = [
     },
     {
         title: "Scene 3: The COVID-19 Pandemic (2019–2022)",
-        subtitle: "A vertical spike to 14.8% unemployment in April 2020 was followed by a rapid 2 year rebound back to historical lows.",
+        subtitle: "Driven by COVID-19 pandemic lockdowns, unemployment skyrocketed from a 50 year low of 3.5% to a record peak of 14.8% in April 2020. Unprecedented fiscal intervention and the economy reopening drove a rapid recovery, returning to 3.9% in under two years.",
         xDomain: [new Date("2019-01-01"), new Date("2022-12-31")],
         annotations: [
             {
