@@ -8,50 +8,107 @@ const state = {
 // Scene configurations with titles, subtitles, xDomain, and annotations
 const scenes = [
     {
-        title: "Scene 1: Dot-Com Bubble (1990–2006)",
-        subtitle: "Baseline labor market conditions and mild structural downturns.",
+        title: "Scene 1: Baseline conditions and Dot-Com Shock (1990–2006)",
+        subtitle: "Following the early 1990s recession, the US labor market expanded steadily to hit a low of 3.8% in April 2000. The 2001 Dot-Com market crash and 9/11 shock led to a relatively mild recession where unemployment peaked at 6.3% (June 2003) before recovering quickly.",
         xDomain: [new Date("1990-01-01"), new Date("2006-12-31")],
         annotations: [
             {
-                note: { title: "June 2003 Peak", label: "Unemployment peaks at 6.3% following the Dot-Com bust.", wrap: 180 },
+                note: {
+                    title: "6.3% - June 2003",
+                    label: "Mild peak after Dot-Com bust.",
+                    wrap: 180
+                },
                 date: new Date("2003-06-01"),
                 rate: 6.3,
-                dx: -40,
+                dx: 10,
+                dy: -40
+            },
+            {
+                note: {
+                    title: "3.8% - April 2000",
+                    label: "Lowest unemployment of 1990s tech boom.",
+                    wrap: 180
+                },
+                date: new Date("2000-04-01"),
+                rate: 3.8,
+                dx: -20,
+                dy: -55
+            }
+
+        ]
+    },
+    {
+        title: "Scene 2: The 2008 Great Recession (2007–2018)",
+        subtitle: "A 2 year climb to 10% unemployment resulted in systemic damage that took nearly 8 years to fully heal.",
+        xDomain: [new Date("2007-01-01"), new Date("2018-12-31")],
+        annotations: [
+            {
+                note: {
+                    title: "10% - October 2009",
+                    label: "Unemployment hits the worst downturn since the 1980s.",
+                    wrap: 200
+                },
+                date: new Date("2009-10-01"),
+                rate: 10.0,
+                dx: 40,
+                dy: -30
+            },
+            {
+                note: {
+                    title: "4.4% - April 2017",
+                    label: "Took nearly 8 years to fully heal.",
+                    wrap: 200
+                },
+                date: new Date("2017-04-01"),
+                rate: 4.4,
+                dx: -5,
+                dy: -55
+            }
+        ]
+    },
+    {
+        title: "Scene 3: The COVID-19 Pandemic (2019–2022)",
+        subtitle: "A vertical spike to 14.8% unemployment in April 2020 was followed by a rapid 2 year rebound back to historical lows.",
+        xDomain: [new Date("2019-01-01"), new Date("2022-12-31")],
+        annotations: [
+            {
+                note: {
+                    title: "3.5% - February 2020",
+                    label: "50 year low prior to the pandemic.",
+                    wrap: 200
+                },
+                date: new Date("2020-02-01"),
+                rate: 3.5,
+                dx: -15,
+                dy: -20
+            },
+            {
+                note: {
+                    title: "14.8% - April 2020 Spike",
+                    label: "The highest unemployment rate recorded since the Great Depression.",
+                    wrap: 200
+                },
+                date: new Date("2020-04-01"),
+                rate: 14.8,
+                dx: 60,
+                dy: 20
+            },
+            {
+                note: { 
+                    title: "3.9% - December 2021", 
+                    label: "Rapid rebound back to pre-pandemic levels in under 2 years.", 
+                    wrap: 180 
+                },
+                date: new Date("2021-12-01"),
+                rate: 3.9,
+                dx: 30,
                 dy: -40
             }
         ]
     },
     {
-        title: "Scene 2: The 2008 Great Recession (2007–2018)",
-        subtitle: "A deep financial crisis causing arise to 10% unemployment, followed by a slow recovery.",
-        xDomain: [new Date("2007-01-01"), new Date("2018-12-31")],
-        annotations: [
-            {
-                note: { title: "October 2009 Peak", label: "Unemployment hits 10%, the worst downturn since the 1980s.", wrap: 200 },
-                date: new Date("2009-10-01"),
-                rate: 10.0,
-                dx: 40,
-                dy: -30
-            }
-        ]
-    },
-    {
-        title: "Scene 3: The 2020 COVID-19 Pandemic (2019–2022)",
-        subtitle: "A spike to 14.8% followed by a rapid rebound.",
-        xDomain: [new Date("2019-01-01"), new Date("2022-12-31")],
-        annotations: [
-            {
-                note: { title: "April 2020 Spike", label: "14.8%, The highest unemployment rate recorded since the Great Depression.", wrap: 200 },
-                date: new Date("2020-04-01"),
-                rate: 14.8,
-                dx: 60,
-                dy: 20
-            }
-        ]
-    },
-    {
         title: "Scene 4: Full Exploration (1990–Present)",
-        subtitle: "Compare all economic shocks across the entire 1990–Present timeline.",
+        subtitle: "Explore the entire 1990–Present timeline.",
         xDomain: null,
         annotations: []
     }
