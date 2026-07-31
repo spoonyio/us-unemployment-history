@@ -9,7 +9,7 @@ const state = {
 const scenes = [
     {
         title: "Scene 1: Baseline conditions and Dot-Com Shock (1990–2006)",
-        subtitle: "Following the early 1990s recession, the US labor market expanded steadily to hit a low of 3.8% in April 2000. The 2001 Dot-Com market crash and 9/11 shock led to a relatively mild recession where unemployment peaked at 6.3% (June 2003) before recovering quickly.",
+        subtitle: "Following the early 1990s recession, the US labor market expanded steadily to hit a low of 3.8% in April 2000. The 2001 Dot-Com market crash and 9/11 shock led to a relatively mild recession where unemployment peaked at 6.3% (June 2003) before recovering.",
         xDomain: [new Date("1990-01-01"), new Date("2006-12-31")],
         annotations: [
             {
@@ -20,7 +20,7 @@ const scenes = [
                 },
                 date: new Date("2003-06-01"),
                 rate: 6.3,
-                dx: 10,
+                dx: 0,
                 dy: -40
             },
             {
@@ -61,7 +61,7 @@ const scenes = [
                 },
                 date: new Date("2017-04-01"),
                 rate: 4.4,
-                dx: -5,
+                dx: -1,
                 dy: -55
             }
         ]
@@ -79,7 +79,7 @@ const scenes = [
                 },
                 date: new Date("2020-02-01"),
                 rate: 3.5,
-                dx: -15,
+                dx: -10,
                 dy: -20
             },
             {
@@ -90,7 +90,7 @@ const scenes = [
                 },
                 date: new Date("2020-04-01"),
                 rate: 14.8,
-                dx: 60,
+                dx: 65,
                 dy: 20
             },
             {
